@@ -1,50 +1,103 @@
-from flask import Flask, request, jsonify
+import os
+import uuid
+from flask import Flask, request, jsonify, send_from_directory
 from config import GROQ_API_KEY
 
-# Initializing the Flask application. Flask is a lightweight framework,
-# which is perfect for this project because it's simple and lets me focus on the agent logic.
-app = Flask(__name__)
+# Importing our agent functions and classes
+from agents.controller import route_query, synthesize_answer
+from agents.pdf_rag import RAGAgent
+from agents.web_search import search_web
+from agents.arxiv import search_arxiv
 
-# It's good practice to check if the API key was loaded correctly on startup.
-# This simple check will stop the app if the .env file is missing or incorrect.
+# --- Initialization ---
+# I'm initializing the Flask app and the RAG agent here, at the start.
+app = Flask(__name__, static_folder='../frontend', static_url_path='')
+rag_agent = RAGAgent()
+
+# A simple check to make sure the API key is loaded.
 if not GROQ_API_KEY:
     raise ValueError("ERROR: GROQ_API_KEY not found. Make sure you have a .env file with the key.")
 else:
     print("-> GROQ API Key loaded successfully.")
 
+# --- Frontend Route ---
+# This will serve our main HTML file for the UI.
+@app.route('/')
+def index():
+    return send_from_directory(app.static_folder, 'index.html')
 
-@app.route('/ask', methods=['POST'])
-def ask():
-    # This is a placeholder for now. It just confirms that the endpoint
-    # receives the query from the frontend.
-    data = request.get_json()
-    query = data.get('query')
-    print(f"-> Received query: {query}")
-    return jsonify({
-        "answer": f"Backend received your query: '{query}'. The real logic is coming soon!",
-        "agents_used": ["Placeholder Agent"]
-    })
-
-# TODO: Implement the actual file saving and processing logic later.
+# --- API Endpoints ---
 @app.route('/upload_pdf', methods=['POST'])
 def upload_pdf():
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
     file = request.files['file']
-    print(f"-> Received file: {file.filename}")
-    # For now, just confirming we got the file.
-    return jsonify({"message": f"File '{file.filename}' received. Processing to be implemented.", "file_id": "temp_file_123"})
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    # It's a good practice to save uploaded files to a temporary directory.
+    # I'm creating a 'temp_uploads' folder if it doesn't exist.
+    temp_dir = "temp_uploads"
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    # Using uuid to create a unique filename to avoid conflicts.
+    file_id = str(uuid.uuid4())
+    file_path = os.path.join(temp_dir, f"{file_id}.pdf")
+    file.save(file_path)
+    
+    # Now, process the saved PDF with our RAG agent.
+    rag_agent.process_pdf(file_path, file_id)
+    
+    print(f"-> File uploaded and processed with file_id: {file_id}")
+    return jsonify({"message": f"File '{file.filename}' uploaded successfully.", "file_id": file_id})
 
 
-# This endpoint will eventually show our trace logs.
+@app.route('/ask', methods=['POST'])
+def ask():
+    data = request.get_json()
+    query = data.get('query')
+    file_id = data.get('file_id') # This can be None if no file was uploaded
+
+    if not query:
+        return jsonify({"error": "Query is required."}), 400
+
+    # 1. Controller decides which tool to use.
+    file_id_present = file_id is not None
+    decision = route_query(query, file_id_present)
+    tool_to_use = decision.get("tool")
+    rationale = decision.get("rationale")
+    
+    context = ""
+    # 2. Call the appropriate agent based on the controller's decision.
+    if tool_to_use == "PDF-RAG":
+        if not file_id:
+            context = "Error: The controller decided to use the PDF, but no PDF was provided."
+        else:
+            context = rag_agent.query_pdf(query, file_id)
+    elif tool_to_use == "ArxivSearch":
+        context = search_arxiv(query)
+    elif tool_to_use == "WebSearch":
+        context = search_web(query)
+    else:
+        # A fallback just in case the LLM gives a weird response.
+        context = search_web(query)
+        rationale += " (Fallback to web search due to unexpected tool choice)."
+
+    # 3. Synthesize the final answer using the context.
+    final_answer = synthesize_answer(query, context)
+
+    return jsonify({
+        "answer": final_answer,
+        "agents_used": [tool_to_use],
+        "rationale": rationale
+    })
+
+
+# TODO: Implement a real logging system later.
 @app.route('/logs', methods=['GET'])
 def get_logs():
-    # Placeholder log data for now.
     return jsonify([{"log": "System is running. Logging to be implemented."}])
 
-# This block allows us to run the server directly from the command line
-# using 'python backend/main.py'. The debug=True flag is super helpful
-# for development as it automatically reloads the server when we save changes.
+
 if __name__ == '__main__':
-    print("-> Starting Flask server in debug mode...")
     app.run(debug=True, port=5001)
