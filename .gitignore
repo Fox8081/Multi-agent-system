@@ -4,3 +4,4 @@ venv/
 *.so
 *.pyc
 __pycache__/
+.env
