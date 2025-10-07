@@ -3,6 +3,7 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+import os
 
 # I'm creating a class for the RAG agent to hold the model and the vector stores.
 # This is better than using global variables because it keeps everything organized.
@@ -11,7 +12,10 @@ class RAGAgent:
         # Using 'all-MiniLM-L6-v2'. It's a great model that's fast and effective,
         # perfect for running on a local machine without a powerful GPU.
         print("-> Initializing RAG Agent: Loading embedding model...")
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        os.environ["HF_HOME"] = "/tmp"
+        os.environ["TRANSFORMERS_CACHE"] = "/tmp"
+        os.environ["SENTENCE_TRANSFORMERS_HOME"] = "/tmp"
+        self.model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
         # This dictionary will store the FAISS indexes in memory.
         # The key will be the file_id, so we can handle multiple PDF uploads.
         self.vector_stores = {}
