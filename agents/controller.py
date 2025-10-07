@@ -46,7 +46,7 @@ def route_query(query: str, file_id_present: bool):
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
             ],
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",
             temperature=0,
             response_format={"type": "json_object"},
         )
@@ -60,19 +60,32 @@ def route_query(query: str, file_id_present: bool):
         return {"tool": "WebSearch", "rationale": "LLM routing failed, falling back to a general web search."}
 
 
-def synthesize_answer(query, context):
+def synthesize_answer(query, context, client):
     """
-    Generates a final answer using the context gathered from the specialist agents.
+    Synthesizes a final, Markdown-formatted answer from multiple context sources.
     """
     print("-> Synthesizing final answer...")
-    prompt = f"Based on the following context, please provide a comprehensive and friendly answer to the user's query.\n\nContext:\n{context}\n\nUser Query: {query}"
-    
+
+    if not context.strip():
+        return "I couldn't find enough information to answer that question."
+
+    messages = [
+        {"role": "system", "content": (
+            "You are a helpful and friendly AI assistant. "
+            "Using the provided context, write a clear and complete Markdown-formatted answer. "
+            "Use bold text (**like this**) for key points."
+        )},
+        {"role": "user", "content": f"Context:\n{context}\n\nUser Query: {query}"}
+    ]
+
     try:
-        chat_completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama3-8b-8192",
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=800
         )
-        return chat_completion.choices[0].message.content
+        return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"Error during answer synthesis: {e}")
+        print(f"[Error] synthesize_answer: {type(e).__name__} - {e}")
         return "There was an error generating the final answer."
