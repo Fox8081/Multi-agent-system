@@ -18,7 +18,7 @@ def setup_logger():
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
     # Create a handler to write logs to a file.
-    file_handler = logging.FileHandler('trace.log')
+    file_handler = logging.FileHandler('/app/logs/trace.log')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 

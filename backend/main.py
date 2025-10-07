@@ -101,7 +101,7 @@ def get_logs():
     This fulfills the requirement to have an accessible log trace.
     """
     try:
-        with open('trace.log', 'r') as f:
+        with open('/app/logs/trace.log', 'r') as f:
             logs = f.read()
         # Returning the log content as plain text for simplicity.
         return logs, 200, {'Content-Type': 'text/plain; charset=utf-8'}

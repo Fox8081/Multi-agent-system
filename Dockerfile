@@ -10,6 +10,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Create a writable directory for logs
+RUN mkdir -p /app/logs && chmod -R 777 /app/logs
+
 # Copy the rest of the project
 COPY . .
 
