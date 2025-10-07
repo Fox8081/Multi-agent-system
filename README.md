@@ -1,5 +1,5 @@
 ---
-title: Basic Docker SDK Space
+title: Multi-agent-system
 emoji: 🐳
 colorFrom: purple
 colorTo: gray
