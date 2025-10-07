@@ -1,9 +1,11 @@
 #!/bin/bash
 
-# Ensure writable cache directory (for HF / transformers / embeddings)
-export TRANSFORMERS_CACHE='/app/cache'
+# Create a writable cache directory if it doesn’t exist
+mkdir -p /app/cache
+chmod -R 777 /app/cache
 
-# Start the Flask app via Gunicorn as a Python module
-# --chdir backend → tells Gunicorn to look inside /app/backend
-# main:app → loads the 'app' instance from main.py
+# Use the new environment variable for Hugging Face model caching
+export HF_HOME='/app/cache'
+
+# Start the Flask app via Gunicorn
 python -m gunicorn --chdir backend --bind 0.0.0.0:7860 main:app

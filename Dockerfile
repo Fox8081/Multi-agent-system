@@ -19,5 +19,7 @@ RUN chmod +x run.sh
 # Expose the app port
 EXPOSE 7860
 
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+
 # Run the app
 CMD ["./run.sh"]
