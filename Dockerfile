@@ -12,13 +12,12 @@ COPY requirements.txt .
 # Install all the Python dependencies.
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Now, copy the rest of the project files into the /app directory in the container.
-COPY . .
+# Copy the run script and make it executable
+COPY run.sh .
+RUN chmod +x run.sh
 
-# Tell Docker that the container will listen on port 7860.
-# Hugging Face Spaces uses this port by default for web apps.
+# Expose the port the app runs on
 EXPOSE 7860
 
-# This is the command that will run when the container starts.
-# It uses Gunicorn, a proper production server, to run our Flask app from main.py.
-CMD ["gunicorn", "--bind", "0.0.0.0:7860", "backend.main:app"]
+# Run the application using our new script
+CMD ["./run.sh"]
