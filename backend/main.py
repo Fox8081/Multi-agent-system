@@ -2,7 +2,7 @@ import os
 import uuid
 from flask import Flask, request, jsonify, send_from_directory
 from backend.config import GROQ_API_KEY
-
+from backend.logging_utils import app_logger
 # Importing our agent functions and classes
 from agents.controller import route_query, synthesize_answer, client
 from agents.pdf_rag import RAGAgent
@@ -18,7 +18,7 @@ rag_agent = RAGAgent()
 if not GROQ_API_KEY:
     raise ValueError("ERROR: GROQ_API_KEY not found. Make sure you have a .env file with the key.")
 else:
-    print("-> GROQ API Key loaded successfully.")
+    app_logger.info("GROQ API Key loaded successfully.")
 
 # --- Frontend Route ---
 # This will serve our main HTML file for the UI.
@@ -48,7 +48,7 @@ def upload_pdf():
     # Now, process the saved PDF with our RAG agent.
     rag_agent.process_pdf(file_path, file_id)
     
-    print(f"-> File uploaded and processed with file_id: {file_id}")
+    app_logger.info(f"File uploaded and processed...")
     return jsonify({"message": f"File '{file.filename}' uploaded successfully.", "file_id": file_id})
 
 
@@ -93,10 +93,20 @@ def ask():
     })
 
 
-# TODO: Implement a real logging system later.
+# TODO: completed the task 
 @app.route('/logs', methods=['GET'])
 def get_logs():
-    return jsonify([{"log": "System is running. Logging to be implemented."}])
+    """
+    This endpoint reads the trace.log file and returns its content.
+    This fulfills the requirement to have an accessible log trace.
+    """
+    try:
+        with open('trace.log', 'r') as f:
+            logs = f.read()
+        # Returning the log content as plain text for simplicity.
+        return logs, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    except FileNotFoundError:
+        return "Log file not found.", 404
 
 
 if __name__ == '__main__':
