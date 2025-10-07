@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multi-Agent System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Multi-Agent AI System</h1>
+        <p class="subtitle">Here To Answer Your Question</p>
+        
+        <form id="query-form">
+            <div class="input-group">
+                <input type="text" id="query-input" placeholder="Ask a question about a topic or your PDF..." required>
+                <input type="file" id="pdf-upload" accept=".pdf">
+                <button type="submit" id="submit-button">Ask</button>
+            </div>
+        </form>
+        
+        <div id="status-area"></div>
+
+        <div id="result-area" class="hidden">
+            <h2>Answer:</h2>
+            <p id="answer-text"></p>
+            <div class="meta-info">
+                <h3>Agent Used:</h3>
+                <p id="agent-used"></p>
+                <h3>Controller Rationale:</h3>
+                <p id="rationale"></p>
+            </div>
+        </div>
+    </div>
+    <script src="App.js"></script>
+</body>
+</html>
