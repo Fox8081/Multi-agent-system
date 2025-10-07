@@ -1,5 +1,5 @@
 # I'm starting with a lean official Python image. This keeps the final container size smaller.
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Set the working directory inside the container to /app.
 # This is where our project files will live.
