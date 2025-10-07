@@ -1,10 +1,10 @@
 import os
 import uuid
 from flask import Flask, request, jsonify, send_from_directory
-from config import GROQ_API_KEY
+from backend.config import GROQ_API_KEY
 
 # Importing our agent functions and classes
-from agents.controller import route_query, synthesize_answer
+from agents.controller import route_query, synthesize_answer, client
 from agents.pdf_rag import RAGAgent
 from agents.web_search import search_web
 from agents.arxiv import search_arxiv
@@ -84,7 +84,7 @@ def ask():
         rationale += " (Fallback to web search due to unexpected tool choice)."
 
     # 3. Synthesize the final answer using the context.
-    final_answer = synthesize_answer(query, context)
+    final_answer = synthesize_answer(query, context, client)
 
     return jsonify({
         "answer": final_answer,
