@@ -1,4 +1,5 @@
 # Set the working directory inside the container
+FROM python:3.11-slim
 WORKDIR /app
 
 # Create writable directories for logs, cache, and uploads
