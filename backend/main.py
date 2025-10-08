@@ -37,7 +37,7 @@ def upload_pdf():
 
     # It's a good practice to save uploaded files to a temporary directory.
     # I'm creating a 'temp_uploads' folder if it doesn't exist.
-    temp_dir = "temp_uploads"
+    temp_dir = "/app/temp_uploads" 
     os.makedirs(temp_dir, exist_ok=True)
     
     # Using uuid to create a unique filename to avoid conflicts.
